@@ -32,6 +32,27 @@ jobs:
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Extract project ZIP
+            - name: Align Java and Kotlin versions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path("extracted/GermanLessons/app/build.gradle.kts")
+          s = p.read_text()
+          block = """compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }"""
+          pattern = r'compileOptions\s*\{[^}]*\}'
+          if re.search(pattern, s):
+              s = re.sub(pattern, block, s, count=1)
+          else:
+              s = re.sub(r'\bandroid\s*\{',
+                         'android {\n    ' + block,
+                         s, count=1)
+          p.write_text(s)
+          PY
         run: unzip -o GermanLessonsAndroidProject.zip -d extracted
 
       - name: Build APK
